@@ -1,0 +1,71 @@
+{
+  "name": "HYDRA Market Dashboard",
+  "short_name": "HYDRA Mkt",
+  "id": "./",
+  "start_url": "./?source=homescreen",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
+  "icons": [
+    {
+      "src": "pwa-icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa-icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa-icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "pwa-icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "pwa-icons/icon-167.png",
+      "sizes": "167x167",
+      "type": "image/png"
+    },
+    {
+      "src": "pwa-icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "HYDRA Mkt Market",
+      "url": "./?action=market"
+    },
+    {
+      "name": "HYDRA Mkt Gainers",
+      "url": "./?action=gainers"
+    },
+    {
+      "name": "HYDRA Mkt Position",
+      "url": "./?action=position"
+    },
+    {
+      "name": "HYDRA Mkt Bot",
+      "url": "./?action=bot"
+    },
+    {
+      "name": "HYDRA Mkt Journal",
+      "url": "./?action=journal"
+    },
+    {
+      "name": "HYDRA Mkt Alerts",
+      "url": "./?action=alerts"
+    }
+  ]
+}

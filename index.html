@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- html2pwa:begin -->
+<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HYDRA Mkt">
+<link rel="apple-touch-icon" href="pwa-icons/icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="pwa-icons/icon-180.png">
+<link rel="apple-touch-icon" sizes="167x167" href="pwa-icons/icon-167.png">
+<link rel="apple-touch-icon" sizes="152x152" href="pwa-icons/icon-152.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="pwa-icons/favicon-32.png">
+<script src="pwa-deeplink.js" defer data-register-sw="1"></script>
+<!-- html2pwa:end -->
+
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="HYDRA Market Dashboard: live Coinbase public market data, position tracker and bot alert settings. Alerts and order previews only.">
+<title>HYDRA Market</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="hero">
+  <picture>
+    <source type="image/webp" srcset="img/banner-800.webp 800w, img/banner.webp 1376w" sizes="(min-width:860px) 620px, 100vw">
+    <img class="banner" src="img/banner.jpg" srcset="img/banner-800.jpg 800w, img/banner.jpg 1376w" sizes="(min-width:860px) 620px, 100vw" width="1376" height="768" alt="HYDRA Advanced Intelligence">
+  </picture>
+  <div class="bar">
+    <img class="crest" src="img/crest.png" alt="">
+    <div class="ttl"><div class="k">H.A.I.L. // MARKET</div><div class="t">HYDRA MARKET</div></div>
+    <div class="feed" id="feed" title="Data feed status"><span class="dot"></span><span id="feedTxt">CONNECTING</span></div>
+  </div>
+</header>
+
+<div class="gov" role="note"><b>No API keys. No auto-trading.</b> Orders leave this app only when you tap <b>Confirm &amp; send</b> — that is your approval for that exact order.</div>
+
+<main>
+<!-- MARKET -->
+<section id="tab-market" class="tab on">
+  <div class="sechead"><h2>Watchlist</h2><span class="mut sm" id="updated">—</span></div>
+  <div id="cards" class="cards"></div>
+  <form id="addForm" class="addrow" autocomplete="off">
+    <input id="addInput" placeholder="Add coin (e.g. DOGE or LINK-USD)" aria-label="Add coin">
+    <button class="btn gold" type="submit">Add</button>
+  </form>
+  <div class="row gap sm mut"><span>Spike/dip badge when the 1h move is at least</span>
+    <input id="spikeTh" class="num w5" type="number" step="0.5" min="0.5" inputmode="decimal"> %</div>
+  <p class="foot-note">Public Coinbase Exchange market data (no account, no keys). Prices can lag the Coinbase app by a few seconds.</p>
+</section>
+
+
+<!-- GAINERS -->
+<section id="tab-gainers" class="tab">
+  <div class="sechead"><h2 id="gainTitle">Top gainers</h2>
+    <div class="seg sm" id="gainMode"><button data-mode="gain" class="on">Gainers</button><button data-mode="lose">Losers</button></div>
+  </div>
+  <div class="row gap wrap sm mut" style="margin:0 0 8px">
+    <label>Min 24h USD vol $<input id="minVol" class="num w7" type="number" step="100000" min="0" inputmode="decimal"></label>
+    <label class="chk"><input type="checkbox" id="exHot" checked> Hide already-ran (&gt;30%)</label>
+    <label>Rank by<select id="rankBy" style="width:auto"><option value="score">momentum vs fees</option><option value="ch24">24h %</option></select></label>
+    <span id="gainMeta">—</span>
+  </div>
+  <p class="sm mut" id="gainLegend">Labels: <span class="badge sig">FEE-CLEAR</span> setup clears Intro fees · <span class="badge spike">CHASING</span> already extended · <span class="badge">NEUTRAL</span> · thin book flagged.</p>
+  <div id="gainers" class="cards"></div>
+  <p class="foot-note">Public Coinbase Exchange /products + /products/stats. Ranking refreshes about every 60s; prices update live over the ticker websocket. Illiquid pairs (below the volume floor) are hidden.</p>
+</section>
+<!-- POSITION -->
+<section id="tab-position" class="tab">
+  <div class="sechead"><h2>Open position</h2><span class="mut sm" id="posOrder"></span></div>
+  <div class="card pos">
+    <div class="row between"><div><div class="lbl">Live price</div><div class="big" id="pPrice">—</div></div>
+      <div class="right"><div class="lbl">Net P&amp;L if sold now</div><div class="big" id="pPnl">—</div><div class="sm" id="pPnlPct"></div></div></div>
+    <canvas id="gauge" class="gauge" height="90"></canvas>
+    <div class="grid2">
+      <div><div class="lbl">Holding</div><div class="val" id="pQty">—</div></div>
+      <div><div class="lbl">Cost incl. fee</div><div class="val" id="pCost">—</div></div>
+      <div><div class="lbl">Break-even (sell at market)</div><div class="val" id="pBeT">—</div></div>
+      <div><div class="lbl">Break-even (limit / maker)</div><div class="val" id="pBeM">—</div></div>
+      <div><div class="lbl">To take-profit</div><div class="val" id="pToTp">—</div></div>
+      <div><div class="lbl">To stop</div><div class="val" id="pToSl">—</div></div>
+      <div><div class="lbl">If TP fills</div><div class="val" id="pAtTp">—</div></div>
+      <div><div class="lbl">If stop fills</div><div class="val" id="pAtSl">—</div></div>
+      <div><div class="lbl">Market value</div><div class="val" id="pVal">—</div></div>
+      <div><div class="lbl">Free cash</div><div class="val" id="pCash">—</div></div>
+    </div>
+    <p class="sm mut">Values are typed in below, not read from your account. Net P&amp;L subtracts the exit fee (taker if sold at market). Ask Grok Bot in chat for your live balance.</p>
+  </div>
+  <details class="card" id="posEdit"><summary>Edit position</summary>
+    <form id="posForm" class="form">
+      <label>Product<input name="product" required></label>
+      <label>Quantity<input name="qty" type="number" step="any" inputmode="decimal" required></label>
+      <label>Entry price<input name="entry" type="number" step="any" inputmode="decimal" required></label>
+      <label>Cost incl. fee ($)<input name="cost" type="number" step="any" inputmode="decimal"></label>
+      <label>Take-profit price<input name="tp" type="number" step="any" inputmode="decimal"></label>
+      <label>Stop price<input name="sl" type="number" step="any" inputmode="decimal"></label>
+      <label>Bracket order id<input name="order"></label>
+      <label>Free USD ($)<input name="usd" type="number" step="any" inputmode="decimal"></label>
+      <label>Free USDC ($)<input name="usdc" type="number" step="any" inputmode="decimal"></label>
+      <label>Free cash total ($)<input name="cash" type="number" step="any" inputmode="decimal" readonly></label>
+      <div class="row gap"><button class="btn gold" type="submit">Save</button><button class="btn" type="button" id="posCalcCost">Cost = qty × entry × (1 + taker)</button></div>
+    </form>
+  </details>
+</section>
+
+<!-- BOT -->
+<section id="tab-bot" class="tab">
+  <div class="sechead"><h2>Bot settings</h2></div>
+  <div class="notice"><b>Backtest notice (2026-10-08):</b> none of the 32 strategy/coin/timeframe combinations tested cleared Intro-tier fees out-of-sample (<code>no_rules_pass: true</code>). Treat signals here as research alerts, not an edge.</div>
+  <div class="card">
+    <div class="lbl">Fee model (Intro tier)</div>
+    <div class="grid3">
+      <label>Taker %<input id="feeTaker" type="number" step="0.01" inputmode="decimal"></label>
+      <label>Maker %<input id="feeMaker" type="number" step="0.01" inputmode="decimal"></label>
+      <label>Slip/side %<input id="feeSlip" type="number" step="0.01" inputmode="decimal"></label>
+    </div>
+    <div class="sm mut" id="rtTxt"></div>
+  </div>
+  <div id="rules"></div>
+  <div class="row gap wrap"><button class="btn gold" id="addRule">+ Add rule</button>
+    <button class="btn crim" id="copyBot">Copy for Grok Bot</button>
+    <button class="btn" id="exportBtn">Export JSON</button>
+    <label class="btn file">Import JSON<input id="importFile" type="file" accept="application/json,.json"></label></div>
+  <details class="card"><summary>JSON (scanner_rules schema)</summary>
+    <textarea id="jsonBox" rows="10" spellcheck="false"></textarea>
+    <div class="row gap"><button class="btn" id="jsonApply">Apply pasted JSON</button></div>
+  </details>
+  <p class="foot-note">Rules raise in-app alerts with a pre-filled order preview you can paste into chat. The dashboard holds no API keys and cannot place, edit or cancel orders.</p>
+</section>
+
+
+<!-- JOURNAL -->
+<section id="tab-journal" class="tab">
+  <div class="sechead"><h2>Trade journal</h2>
+    <div class="row gap"><button class="btn sm" id="jExport">Export CSV</button><button class="btn sm" id="jClear">Clear</button></div>
+  </div>
+  <div class="card grid3" id="jStats">
+    <div><div class="lbl">Trades</div><div class="val" id="jCount">0</div></div>
+    <div><div class="lbl">Win rate</div><div class="val" id="jWin">—</div></div>
+    <div><div class="lbl">Net P&amp;L</div><div class="val" id="jPnl">—</div></div>
+  </div>
+  <div class="sm mut" id="jEv"></div>
+  <div id="journal" class="log"></div>
+  <p class="foot-note">Each request starts as a <b>PREDICTION</b> tagged with the role that proposed it. Mark it VERIFIED or DISPROVEN once the fill and exit are entered. Every Confirm &amp; send is logged. Enter fill and exit prices yourself (this app never reads your Coinbase account). Net P&amp;L uses your Intro-tier fee settings.</p>
+</section>
+<!-- ALERTS -->
+<section id="tab-alerts" class="tab">
+  <div class="sechead"><h2>Alerts</h2><button class="btn sm" id="notifBtn">Enable notifications</button></div>
+  <div id="alertRules"></div>
+  <form id="alertForm" class="card form inline" autocomplete="off">
+    <select name="product" id="alertProduct" aria-label="Coin"></select>
+    <select name="cond" aria-label="Condition"><option value="above">price above</option><option value="below">price below</option><option value="move">1h move ≥ %</option></select>
+    <input name="value" type="number" step="any" inputmode="decimal" placeholder="value" required aria-label="Value">
+    <button class="btn gold" type="submit">Add alert</button>
+  </form>
+  <div class="sechead"><h3>Log</h3><button class="btn sm" id="clearLog">Clear</button></div>
+  <div id="log" class="log"></div>
+  <p class="foot-note">Alerts run only while this app is open on screen. iPhone pauses web apps in the background, so this is not a server-side alarm.</p>
+</section>
+</main>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="market" class="on">Market</button>
+  <button data-tab="gainers">Gainers</button>
+  <button data-tab="position">Position</button>
+  <button data-tab="bot">Bot</button>
+  <button data-tab="journal">Journal</button>
+  <button data-tab="alerts">Alerts<span id="alertBadge" class="nb" hidden></span></button>
+</nav>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-in">
+    <div class="row between"><h2 id="shTitle">—</h2><button class="btn sm" id="shClose">Close</button></div>
+    <div class="seg" id="shTf"><button data-g="300">5m</button><button data-g="3600" class="on">1h</button><button data-g="86400">1d</button></div>
+    <canvas id="chart" class="chart" height="260"></canvas>
+    <div class="grid3 sm" id="shStats"></div>
+  </div>
+</div>
+
+<div id="order" class="sheet" hidden>
+  <div class="sheet-in">
+    <div class="row between"><h2 id="orTitle">Order</h2><button class="btn sm" id="orClose" type="button">Close</button></div>
+    <div class="gov sm" style="margin:8px 0"><b>Tapping Confirm &amp; send = your approval for this exact order.</b> Grok Bot will preview it and place it if the preview matches; anything different is sent back to you. This app holds no keys and cannot place the order itself.</div>
+    <div class="grid2">
+      <div><div class="lbl">Side</div><div class="seg" id="orSide"><button data-side="BUY" class="on">BUY</button><button data-side="SELL">SELL</button></div></div>
+      <div><div class="lbl">Type</div><div class="seg" id="orType"><button data-type="MARKET" class="on">Market</button><button data-type="LIMIT">Limit</button></div></div>
+    </div>
+    <form id="orForm" class="form" autocomplete="off">
+      <label id="orAmtL">Amount (USD)<input name="amount" type="number" step="any" min="0" inputmode="decimal" required></label>
+      <label id="orLimL" hidden>Limit price<input name="limit" type="number" step="any" inputmode="decimal"></label>
+      <div class="row gap"><label class="chk"><input type="checkbox" name="bracket" id="orBracket"> Bracket (TP / stop)</label></div>
+      <div class="grid2" id="orBrackets" hidden>
+        <label>Take-profit<input name="tp" type="number" step="any" inputmode="decimal"></label>
+        <label>Stop<input name="sl" type="number" step="any" inputmode="decimal"></label>
+      </div>
+    </form>
+    <div class="card" id="orEst">
+      <div class="lbl">Fee-inclusive estimate (Intro tier)</div>
+      <div class="grid2" id="orEstGrid"></div>
+      <div id="orWarn" class="edge warn" hidden></div>
+    </div>
+    <div class="row gap wrap" style="margin-top:10px">
+      <a class="btn gold" id="orCb" href="#" target="_blank" rel="noopener">Open in Coinbase</a>
+      <button class="btn crim" id="orConfirm" type="button">Confirm &amp; send…</button>
+    </div>
+    <p class="foot-note">Open in Coinbase opens the Coinbase trade page (app if installed). Confirm &amp; send copies an approved order request for you to paste into the Grok Bot chat.</p>
+  </div>
+</div>
+<div id="confirm" class="sheet" hidden>
+  <div class="sheet-in">
+    <div class="row between"><h2>Confirm &amp; send</h2><button class="btn sm" id="cfClose" type="button">Close</button></div>
+    <div class="gov"><b>Tapping Send = your approval for this exact order.</b> Grok Bot will preview it and place it if the preview matches; anything different is sent back to you.</div>
+    <div class="card" id="cfSummary" style="margin-top:10px"></div>
+    <div class="card" id="riskBox">
+      <div class="lbl">Risk limits</div>
+      <div class="grid3">
+        <label>Daily loss cap $<input id="riskDaily" type="number" step="any" inputmode="decimal"></label>
+        <label>Max position $<input id="riskMax" type="number" step="any" inputmode="decimal"></label>
+        <label>Block after N losses<input id="riskStreak" type="number" step="1" min="1" inputmode="numeric"></label>
+      </div>
+      <div class="grid3" id="guardBox">
+        <label>Cooldown min<input id="guardCool" type="number" step="1" min="0" inputmode="numeric"></label>
+        <label>Max % of portfolio<input id="guardPct" type="number" step="any" min="0" inputmode="decimal"></label>
+        <label>Available cash $<input id="guardCash" type="number" step="any" min="0" inputmode="decimal"></label>
+      </div>
+      <div class="sm mut" id="guardInfo"></div>
+      <label class="role">Proposed by<select id="cfRole"><option value="manual">manual (Daryell)</option><option value="gainers_scanner">gainers scanner</option><option value="bot_rule">bot rule alert</option><option value="grok_bot">Grok Bot suggestion</option></select></label>
+      <div id="riskWarn" class="edge warn" hidden></div>
+      <p class="foot-note" style="margin:8px 0 0">Max 10% of portfolio per trade by default. (Cripto-Boats, a reviewed bot, sized every trade at 30% of free balance; HYDRA blocks above your limit.) Cooldown starts when a request is copied; set it to 0 to turn it off.</p>
+    </div>
+    <div class="card edgebox" id="edgeBox"></div>
+    <div class="row gap wrap" style="margin-top:12px">
+      <button class="btn" id="cfBack" type="button">Back</button>
+      <button class="btn crim" id="cfSend" type="button">Confirm &amp; send</button>
+    </div>
+    <p class="foot-note" id="cfHint" hidden>Copied. Paste it into your Grok Bot chat now.</p>
+  </div>
+</div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<script src="js/app.js"></script>
+</body>
+</html>
